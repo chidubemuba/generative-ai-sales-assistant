@@ -9,7 +9,8 @@ import re
 from datetime import timedelta
 import requests
 import sys
-sys.path.extend('../app')
+sys.path.append('../')
+sys.path.extend('../')
 from app.settings import inject_settings
 
 settings = inject_settings()
