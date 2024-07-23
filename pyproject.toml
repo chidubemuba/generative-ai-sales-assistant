@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "sl-hack-be"
+version = "0.1.0"
+description = ""
+authors = ["Mtaylert <Mtaylert@drift.com>"]
+readme = "README.md"
+packages = [{include = "sl_hack_be"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.111.1"
+pydantic = "^2.8.2"
+uvicorn = "^0.30.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
