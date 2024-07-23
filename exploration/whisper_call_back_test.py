@@ -24,6 +24,7 @@ def classification_request(transcription: str, skip=True):
     else:
         return "fake prediction"
 
+# Replace
 
 def run_transcription(command: list, verbose: int) -> str:
     """
@@ -66,8 +67,8 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
     """
     print('Running whisper transcription...')
 
-    main_component_path = f'{settings.WHISEPER_PATH}/whisper_cpp/main'
-    model_path = f'{settings.WHISEPER_PATH}/whisper_cpp/models/{model_string}'
+    main_component_path = f'{settings.WHISPER_PATH}/whisper_cpp/main'
+    model_path = f'{settings.WHISPER_PATH}/whisper_cpp/models/{model_string}'
     command = [main_component_path, '-m', model_path, '-f', input_filename]
 
     # Add tinydiarize flag if enabled
