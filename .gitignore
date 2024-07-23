@@ -1,3 +1,39 @@
+
+# Created by .ignore support plugin (hsz.mobi)
+### JetBrains template
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+
+#Atmos logs and tempdir
+atmos/tmp/*
+atmos.log
+
+# VS Code IDE Files
+.classpath
+.project
+.factorypath
+.vscode/
+.settings/
+
+# Pycharm
+.idea
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python files
+**.pyc
+.venv/**
+.env/**
+atmos/atmos.log
+
+# OSX
+.DS_Store
+
+.joblib
+.python-version
+
 # Ignore .env files
 *.env
 

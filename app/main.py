@@ -1,8 +1,10 @@
 from fastapi import FastAPI
+from app.routers.search.search import router as search_router
 
 
 def create_app() -> FastAPI:
     _app = FastAPI(title="sl-vista-back")
+    _app.include_router(search_router)
     return _app
 
 
