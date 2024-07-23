@@ -48,8 +48,8 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         str: The transcription output.
     """
     print('Running whisper transcription...')
-    main_component_path = '/Users/carlos.salas/Documents/vista_hackathon_2024/whisper_cpp/main'
-    model_path = f'/Users/carlos.salas/Documents/vista_hackathon_2024/whisper_cpp/models/{model_string}'
+    main_component_path = '/Users/carlos.salas/Documents/sl-vista-backend/whisper_cpp/main'
+    model_path = f'/Users/carlos.salas/Documents/sl-vista-backend/whisper_cpp/models/{model_string}'
     command = [main_component_path, '-m', model_path, '-f', input_filename]
 
     # Add tinydiarize flag if enabled
