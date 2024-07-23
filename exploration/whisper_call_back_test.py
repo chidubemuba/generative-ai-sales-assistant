@@ -9,8 +9,7 @@ import re
 from datetime import timedelta
 import requests
 import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append('../')
 from app.settings import inject_settings
 
 settings = inject_settings()
@@ -83,7 +82,7 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         print("Transcription successful. Output:")
         if transcription:
             prediction = classification_request(transcription=transcription, skip=True)
-            print()
+            print(transcription)
             print(prediction)
      
         else:
