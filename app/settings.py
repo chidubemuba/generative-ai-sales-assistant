@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class ApplicationSettings(BaseSettings):
     PINECONE_API_KEY: str
     MIDDLELAYER_PATH: str = "http://0.0.0.0:5050"
-    WHISEPER_PATH: str
+    WHISPER_PATH: str
     class Config:
         case_sensitive = True
         allow_mutation = False
@@ -18,7 +18,8 @@ class ApplicationSettings(BaseSettings):
 
     @staticmethod
     def create():
-        env_file = pathlib.Path(f"app.env")
+        base_dir = pathlib.Path(__file__).resolve().parent.parent
+        env_file = base_dir / "app.env"
         if not env_file.exists():
             raise ValueError(f"{env_file} does not exist.")
 
