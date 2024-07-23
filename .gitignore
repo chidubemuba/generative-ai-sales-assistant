@@ -43,5 +43,10 @@ atmos/atmos.log
 # Ignore the vista_hackathon_env directory
 vista_hackathon_env/
 
+
 # Ignore creds
 credentials/creds.json
+
+# Transcription file
+transcription.txt
+

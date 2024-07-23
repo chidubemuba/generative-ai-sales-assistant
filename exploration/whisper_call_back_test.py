@@ -7,6 +7,7 @@ import queue
 import threading
 import re
 from datetime import timedelta
+import requests
 
 def run_transcription(command: list, verbose: int) -> str:
     """
@@ -48,6 +49,7 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         str: The transcription output.
     """
     print('Running whisper transcription...')
+
     main_component_path = '/Users/carlos.salas/Documents/sl-vista-backend/whisper_cpp/main'
     model_path = f'/Users/carlos.salas/Documents/sl-vista-backend/whisper_cpp/models/{model_string}'
     command = [main_component_path, '-m', model_path, '-f', input_filename]
@@ -61,6 +63,10 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         print("Transcription successful. Output:")
         if transcription:
             print(transcription)
+            # payload = {"input_chunk": transcription}
+            # classification_reply = requests.post("http://0.0.0.0/8080/classify-chunk", data=payload)
+            # prediction = classification_reply.json()
+            # if prediction == 'pricing':
         else:
             print("No transcription output (possibly due to short audio)")
         return transcription
