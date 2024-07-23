@@ -9,6 +9,8 @@ LOG = logging.getLogger(__name__)
 
 class ApplicationSettings(BaseSettings):
     PINECONE_API_KEY: str
+    MIDDLELAYER_PATH: str = "http://0.0.0.0:5050"
+    WHISEPER_PATH: str
     class Config:
         case_sensitive = True
         allow_mutation = False

@@ -50,3 +50,4 @@ credentials/creds.json
 # Transcription file
 transcription.txt
 
+*.wav
