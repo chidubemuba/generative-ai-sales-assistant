@@ -1,0 +1,8 @@
+# Ignore .env files
+*.env
+
+# Ignore .log files
+*.log
+
+# Ignore the vista_hackathon_env directory
+vista_hackathon_env/
