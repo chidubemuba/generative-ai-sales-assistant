@@ -30,11 +30,11 @@ def classify_text(text, categories):
 topic_categories = ["pricing", "competition", "technical_issues", "security_compliance", "other"]
 
 # Define the guideline checklist
-guideline_checklist = ["build_rapport","active listening", "objection_handling", 
+guideline_checklist = ["matt","active listening", "objection_handling", 
                        "identify_decision_makers", "call_wrapup"]
 
 # Function to classify text
-def classify_text(text, categories):
+async def classify_sales_text(text, categories):
     result = classifier(text, categories)
     return result['labels'][0], result['scores'][0]
 
