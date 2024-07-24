@@ -182,7 +182,7 @@ def start_recording(buffer_size_seconds=5, samplerate=16000, model_string='ggml-
 if __name__ == '__main__':
     # Whisper params
     model_string = 'ggml-small.en-tdrz.bin'
-    buffer_size_seconds = 5 
+    buffer_size_seconds = 8
     verbose = 0
     use_tinydiarize = True
     output_file = "transcription.txt"   
