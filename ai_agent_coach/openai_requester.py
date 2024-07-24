@@ -144,10 +144,6 @@ def get_recommendation(client, index, parameters, transcription):
     return recommendations_list
 
 
-
-
-
-
 if __name__ == "__main__":
     from pinecone import Pinecone
     from openai import OpenAI
