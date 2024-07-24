@@ -10,6 +10,7 @@ class ApplicationSettings(BaseSettings):
     PINECONE_API_KEY: str
     MIDDLELAYER_PATH: str = "http://0.0.0.0:5050"
     WHISPER_PATH: str
+    OPENAI_API_KEY: str
     class Config:
         case_sensitive = True
         frozen = True
