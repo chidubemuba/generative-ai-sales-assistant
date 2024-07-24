@@ -1,7 +1,6 @@
 from pinecone import Pinecone
 from openai import OpenAI 
 import json
-import re
 import sys
 sys.path.append('../')
 from devtools.vector_db_uploader import embed_text
@@ -117,27 +116,37 @@ def run_llm_call(client, index, parameters, transcription):
 
     return response_dict
 
+def get_recommendation(client, index, parameters, transcription):
+    """
+    Call an LLM API to get recommendations based on a transcription and return a list of recommendations.
 
-def extract_json(text):
-    try:
-        # Regex pattern to match JSON content
-        pattern = re.compile(r'\{.*\}', re.DOTALL)
-        match = pattern.search(text)
-        if match:
-            json_str = match.group()
-            
-            # Fix common JSON format issues
-            json_str = json_str.replace('\n', '').replace(',}', '}')
-            json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas before closing braces
+    Args:
+        client: The client used to call the LLM API.
+        index: The index object used in the LLM API call (if applicable).
+        parameters (dict): Parameters for the LLM API call.
+        transcription (str): The transcription text to be used in the LLM API call.
 
-            # Manually parse JSON to handle repeated keys
-            entries = re.findall(r'\"label\":\s*\"(.*?)\",\s*\"predicted_confidence\":\s*(\d*\.?\d+)', json_str)
-            standardized_json = [{"label": label, "predicted_confidence": float(conf)} for label, conf in entries]
-            
-            return standardized_json
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-        return None
+    Returns:
+        list: A list of recommendations extracted from the LLM API response.
+    """
+    # Call the LLM API with the provided parameters and transcription
+    response_dict = run_llm_call(client, index, parameters, transcription)
+    
+    # Extract the recommendation string from the API response
+    recommendation_str = response_dict['choices'][0]['content']
+    
+    # Parse the recommendation string into a dictionary
+    recommendation_dict = json.loads(recommendation_str)
+    
+    # Extract the list of recommendations from the dictionary
+    recommendations_list = recommendation_dict.get('recommendations', [])
+    
+    return recommendations_list
+
+
+
+
+
 
 if __name__ == "__main__":
     from pinecone import Pinecone
@@ -148,7 +157,9 @@ if __name__ == "__main__":
     from app.settings import inject_settings
     settings = inject_settings()
 
-    # Set pinecone index
+    # Set pinecone  client, index, and openai client
     pinecone_client = Pinecone(api_key=settings.PINECONE_API_KEY)
     index = pinecone_client.Index("salesloft-vista")
+    client = OpenAI(api_key= settings.OPENAI_API_KEY)
+
 
