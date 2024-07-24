@@ -12,22 +12,29 @@ import sys
 sys.path.append('../')
 sys.path.extend('../')
 from app.settings import inject_settings
+from slm_few_shot_classifier.slm_classifier import classify_text, topic_categories
+
+# import torch
+# from transformers import pipeline
+
+# # Check if CUDA is available
+# device = 0 if torch.cuda.is_available() else -1
+
+
+# # Initialize the zero-shot classification pipeline
+# classifier = pipeline("zero-shot-classification",
+#                       model="facebook/bart-large-mnli",
+#                       device = device)
+# # Define the categories
+# categories = ["pricing", "competition", "technical_issues", "security_compliance", "other"]
+
+# # Function to classify text
+# def classify_text(text):
+#     result = classifier(text, categories)
+#     return result['labels'][0], result['scores'][0]
+
 
 settings = inject_settings()
-
-def classification_request(transcription: str, skip=True):
-    if not skip:
-        url = f'{settings.MIDDLELAYER_PATH}/chunk-intent-detection'
-        data = {
-            'input_chunk': transcription.lower()
-        }
-        response = requests.post(url, json=data)
-        output = response.json()
-        return output
-    else:
-        return "fake prediction"
-
-# Replace
 
 def run_transcription(command: list, verbose: int) -> str:
     """
@@ -82,13 +89,23 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         transcription = run_transcription(command, verbose)
         print("Transcription successful. Output:")
         if transcription:
-            prediction = classification_request(transcription=transcription, skip=True)
             print(transcription)
-            print(prediction)
-     
+            category, confidence = classify_text(transcription, categories = topic_categories)
+            print(f"predicted category:{category}, confidence: {confidence}")
+
+            output_payload = {
+                'transcription': transcription, 
+                'category': category, 
+                'confidence': confidence
+            }     
         else:
             print("No transcription output (possibly due to short audio)")
-        return transcription
+            output_payload = {
+                'transcription': transcription, 
+                'category': None, 
+                'confidence': None
+            }     
+        return output_payload
     except RuntimeError as e:
         print(f"Error during transcription: {e}")
         return ""
@@ -109,11 +126,12 @@ def process_audio_chunk(audio_queue, samplerate: int, model_string: str, verbose
                 wav_file.writeframes(indata)
 
             try:
-                transcription = transcribe_to_txt(tmpfile.name, model_string=model_string, verbose=verbose, use_tinydiarize=use_tinydiarize)
+                transcription_dict = transcribe_to_txt(tmpfile.name, model_string=model_string, verbose=verbose, use_tinydiarize=use_tinydiarize)
                 
                 # Correct timing and save to file
                 chunk_duration = len(indata) / samplerate
-                corrected_transcription = correct_timing(transcription, cumulative_duration, chunk_duration)
+                corrected_transcription = correct_timing(transcription_dict['transcription'], 
+                                                         cumulative_duration, chunk_duration)
                 
                 with open(output_file, 'a') as f:
                     f.write(corrected_transcription + '\n')
