@@ -7,33 +7,16 @@ import queue
 import threading
 import re
 from datetime import timedelta
-import requests
 import sys
 sys.path.append('../')
 sys.path.extend('../')
 from app.settings import inject_settings
 from slm_few_shot_classifier.slm_classifier import classify_text, topic_categories
+from ai_agent_coach.openai_requester import get_recommendation
+from pinecone import Pinecone
+from openai import OpenAI
 
-# import torch
-# from transformers import pipeline
-
-# # Check if CUDA is available
-# device = 0 if torch.cuda.is_available() else -1
-
-
-# # Initialize the zero-shot classification pipeline
-# classifier = pipeline("zero-shot-classification",
-#                       model="facebook/bart-large-mnli",
-#                       device = device)
-# # Define the categories
-# categories = ["pricing", "competition", "technical_issues", "security_compliance", "other"]
-
-# # Function to classify text
-# def classify_text(text):
-#     result = classifier(text, categories)
-#     return result['labels'][0], result['scores'][0]
-
-
+# inject settings
 settings = inject_settings()
 
 def run_transcription(command: list, verbose: int) -> str:
@@ -62,7 +45,8 @@ def run_transcription(command: list, verbose: int) -> str:
     else:
         raise RuntimeError(f"Transcription failed with return code {result.returncode}")
 
-def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin', verbose=1, use_tinydiarize=True) -> str:
+def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin', verbose=1, use_tinydiarize=True,
+                      client = None, index = None, parameters = None) -> str:
     """
     Transcribes an audio file to text using the whisper transcription model.
 
@@ -71,6 +55,9 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         model_string (str): Name of the model to use for transcription.
         verbose (int): Verbosity level. If 1, prints detailed output; if 0, prints minimal output.
         use_tinydiarize (bool): If True, enables tinydiarize for speaker diarization.
+        client (openai.OpenAI): the OpenAI API client
+        index (pinecone.data.index.Index): the Pinecone Index for the vector DB
+        parameters (dict): the parameters dictionary for the LLM Agent
 
     Returns:
         str: The transcription output.
@@ -92,11 +79,14 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
             print(transcription)
             category, confidence = classify_text(transcription, categories = topic_categories)
             print(f"predicted category:{category}, confidence: {confidence}")
-
+            recommendation_list = get_recommendation(client, index, parameters, transcription)
+            print(f'recommendations:')
+            [print(f"\t* {rec}") for rec in recommendation_list]
             output_payload = {
                 'transcription': transcription, 
                 'category': category, 
-                'confidence': confidence
+                'confidence': confidence,
+                'recommendations': recommendation_list
             }     
         else:
             print("No transcription output (possibly due to short audio)")
@@ -110,7 +100,8 @@ def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin'
         print(f"Error during transcription: {e}")
         return ""
 
-def process_audio_chunk(audio_queue, samplerate: int, model_string: str, verbose: int, use_tinydiarize: bool, output_file: str, start_time: float) -> None:
+def process_audio_chunk(audio_queue, samplerate: int, model_string: str, verbose: int, use_tinydiarize: bool, output_file: str, start_time: float,
+                        client = None, index = None, parameters = None) -> None:
     cumulative_duration = start_time
     
     while True:
@@ -126,7 +117,8 @@ def process_audio_chunk(audio_queue, samplerate: int, model_string: str, verbose
                 wav_file.writeframes(indata)
 
             try:
-                transcription_dict = transcribe_to_txt(tmpfile.name, model_string=model_string, verbose=verbose, use_tinydiarize=use_tinydiarize)
+                transcription_dict = transcribe_to_txt(tmpfile.name, model_string=model_string, verbose=verbose, use_tinydiarize=use_tinydiarize,
+                                                       client = client, index = index, parameters = parameters)
                 
                 # Correct timing and save to file
                 chunk_duration = len(indata) / samplerate
@@ -154,7 +146,8 @@ def correct_timing(transcription: str, start_time: float, duration: float) -> st
     corrected = re.sub(r'\[.*?\]', time_str, transcription, count=1)
     return corrected
 
-def start_recording(buffer_size_seconds=5, samplerate=16000, model_string='ggml-small.en-tdrz.bin', verbose=1, use_tinydiarize=True, output_file="transcription.txt") -> None:
+def start_recording(buffer_size_seconds=5, samplerate=16000, model_string='ggml-small.en-tdrz.bin', verbose=1, use_tinydiarize=True, 
+                    client = None, index = None, parameters = None,output_file="transcription.txt") -> None:
     buffer_size_frames = int(buffer_size_seconds * samplerate)
     audio_queue = queue.Queue()
     start_time = 0.0
@@ -169,7 +162,8 @@ def start_recording(buffer_size_seconds=5, samplerate=16000, model_string='ggml-
 
     # Start the processing thread
     processing_thread = threading.Thread(target=process_audio_chunk, 
-                                         args=(audio_queue, samplerate, model_string, verbose, use_tinydiarize, output_file, start_time))
+                                         args=(audio_queue, samplerate, model_string, verbose, use_tinydiarize, output_file, start_time,
+                                         client, index, parameters))
     processing_thread.start()
 
     try:
@@ -186,10 +180,27 @@ def start_recording(buffer_size_seconds=5, samplerate=16000, model_string='ggml-
         processing_thread.join()
 
 if __name__ == '__main__':
+    # Whisper params
     model_string = 'ggml-small.en-tdrz.bin'
     buffer_size_seconds = 5 
     verbose = 0
     use_tinydiarize = True
     output_file = "transcription.txt"   
+
+    # set up clients
+    client = OpenAI(api_key= settings.OPENAI_API_KEY)
+    pinecone_client = Pinecone(api_key=settings.PINECONE_API_KEY)
+    index = pinecone_client.Index("salesloft-vista")
+
+    # Set transcription parameters
+    parameters = {
+        "model": "gpt-4o-mini",
+        "response_format":{ "type": "json_object" },
+        "temperature": 0,
+        "max_tokens": 1000,
+        "top_k":5
+    }
+
     start_recording(buffer_size_seconds=buffer_size_seconds, model_string=model_string, 
-                    verbose=verbose, use_tinydiarize=use_tinydiarize, output_file=output_file)
+                    verbose=verbose, use_tinydiarize=use_tinydiarize, output_file=output_file,
+                    client = client, index = index, parameters = parameters)
