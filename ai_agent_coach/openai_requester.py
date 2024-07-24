@@ -1,4 +1,15 @@
 from pinecone import Pinecone
+from openai import OpenAI
+import sys
+sys.path.append('../')
+sys.path.extend('../')
+from app.settings import inject_settings
+settings = inject_settings()
+
+# Set pinecone  client, index, and openai client
+pinecone_client = Pinecone(api_key=settings.PINECONE_API_KEY)
+index = pinecone_client.Index("salesloft-vista")
+client = OpenAI(api_key= settings.OPENAI_API_KEY)
 from openai import OpenAI 
 import json
 import sys

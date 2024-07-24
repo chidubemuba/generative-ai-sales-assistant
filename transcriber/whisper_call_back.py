@@ -8,35 +8,30 @@ import threading
 import re
 from datetime import timedelta
 import sys
+import requests
 
 sys.path.append("../")
 sys.path.extend("../")
 from app.settings import inject_settings
-<<<<<<< HEAD
-from slm_few_shot_classifier.slm_classifier import classify_text, topic_categories
+from slm_few_shot_classifier.slm_classifier import classify_text, topic_categories, guideline_checklist
 from ai_agent_coach.openai_requester import get_recommendation
 from pinecone import Pinecone
 from openai import OpenAI
-=======
-from slm_few_shot_classifier.slm_classifier import (
-    classify_text,
-    topic_categories,
-    guideline_checklist,
-)
->>>>>>> 1e0503c (whiseper integration)
 
 # inject settings
 settings = inject_settings()
+pinecone_client = Pinecone(api_key=settings.PINECONE_API_KEY)
+index = pinecone_client.Index("salesloft-vista")
+client = OpenAI(api_key= settings.OPENAI_API_KEY)
 
-
-def post_recommendation(label, sales_label):
+def post_recommendation(label, sales_label, recommendation_list):
     recommendation_checklist = None
     sales_checklist = None
     if label or sales_label:
         if label:
             recommendation_checklist = {
                 "prediction_label": label,
-                "recommendation_instruction": f"The category is {label}",
+                "recommendation_instruction": recommendation_list,
             }
         if sales_label:
             sales_checklist = {"category": sales_label, "achieved": True}
@@ -78,18 +73,8 @@ def run_transcription(command: list, verbose: int) -> str:
     else:
         raise RuntimeError(f"Transcription failed with return code {result.returncode}")
 
-<<<<<<< HEAD
 def transcribe_to_txt(input_filename: str, model_string='ggml-small.en-tdrz.bin', verbose=1, use_tinydiarize=True,
                       client = None, index = None, parameters = None) -> str:
-=======
-
-def transcribe_to_txt(
-    input_filename: str,
-    model_string="ggml-small.en-tdrz.bin",
-    verbose=1,
-    use_tinydiarize=True,
-) -> str:
->>>>>>> 1e0503c (whiseper integration)
     """
     Transcribes an audio file to text using the whisper transcription model.
 
@@ -127,7 +112,6 @@ def transcribe_to_txt(
                 transcription, categories=guideline_checklist
             )
             print(f"predicted category:{category}, confidence: {confidence}")
-<<<<<<< HEAD
             recommendation_list = get_recommendation(client, index, parameters, transcription)
             print(f'recommendations:')
             [print(f"\t* {rec}") for rec in recommendation_list]
@@ -137,7 +121,6 @@ def transcribe_to_txt(
                 'confidence': confidence,
                 'recommendations': recommendation_list
             }     
-=======
             label = None
             sales = None
             print(f"predicted category:{sales_category}, confidence: {sales_confidence}")
@@ -149,7 +132,7 @@ def transcribe_to_txt(
 
                     sales = sales_category
 
-                post_recommendation(label=label, sales_label=sales)
+                post_recommendation(label=label, sales_label=sales, recommendation_list=recommendation_list)
             except Exception as error:
                 print(f"Issues with middle-layer request: {error}")
 
@@ -158,7 +141,6 @@ def transcribe_to_txt(
                 "category": category,
                 "confidence": confidence,
             }
->>>>>>> 1e0503c (whiseper integration)
         else:
             print("No transcription output (possibly due to short audio)")
             output_payload = {
@@ -171,21 +153,8 @@ def transcribe_to_txt(
         print(f"Error during transcription: {e}")
         return ""
 
-<<<<<<< HEAD
 def process_audio_chunk(audio_queue, samplerate: int, model_string: str, verbose: int, use_tinydiarize: bool, output_file: str, start_time: float,
                         client = None, index = None, parameters = None) -> None:
-=======
-
-def process_audio_chunk(
-    audio_queue,
-    samplerate: int,
-    model_string: str,
-    verbose: int,
-    use_tinydiarize: bool,
-    output_file: str,
-    start_time: float,
-) -> None:
->>>>>>> 1e0503c (whiseper integration)
     cumulative_duration = start_time
 
     while True:
@@ -203,19 +172,9 @@ def process_audio_chunk(
                 wav_file.writeframes(indata)
 
             try:
-<<<<<<< HEAD
                 transcription_dict = transcribe_to_txt(tmpfile.name, model_string=model_string, verbose=verbose, use_tinydiarize=use_tinydiarize,
                                                        client = client, index = index, parameters = parameters)
                 
-=======
-                transcription_dict = transcribe_to_txt(
-                    tmpfile.name,
-                    model_string=model_string,
-                    verbose=verbose,
-                    use_tinydiarize=use_tinydiarize,
-                )
-
->>>>>>> 1e0503c (whiseper integration)
                 # Correct timing and save to file
                 chunk_duration = len(indata) / samplerate
                 corrected_transcription = correct_timing(
@@ -247,20 +206,8 @@ def correct_timing(transcription: str, start_time: float, duration: float) -> st
     corrected = re.sub(r"\[.*?\]", time_str, transcription, count=1)
     return corrected
 
-<<<<<<< HEAD
 def start_recording(buffer_size_seconds=5, samplerate=16000, model_string='ggml-small.en-tdrz.bin', verbose=1, use_tinydiarize=True, 
                     client = None, index = None, parameters = None,output_file="transcription.txt") -> None:
-=======
-
-def start_recording(
-    buffer_size_seconds=5,
-    samplerate=16000,
-    model_string="ggml-small.en-tdrz.bin",
-    verbose=1,
-    use_tinydiarize=True,
-    output_file="transcription.txt",
-) -> None:
->>>>>>> 1e0503c (whiseper integration)
     buffer_size_frames = int(buffer_size_seconds * samplerate)
     audio_queue = queue.Queue()
     start_time = 0.0
@@ -274,11 +221,6 @@ def start_recording(
         audio_queue.put(indata.copy())
 
     # Start the processing thread
-<<<<<<< HEAD
-    processing_thread = threading.Thread(target=process_audio_chunk, 
-                                         args=(audio_queue, samplerate, model_string, verbose, use_tinydiarize, output_file, start_time,
-                                         client, index, parameters))
-=======
     processing_thread = threading.Thread(
         target=process_audio_chunk,
         args=(
@@ -289,9 +231,11 @@ def start_recording(
             use_tinydiarize,
             output_file,
             start_time,
+            client,
+            index,
+            parameters
         ),
     )
->>>>>>> 1e0503c (whiseper integration)
     processing_thread.start()
 
     try:
@@ -314,7 +258,6 @@ def start_recording(
         audio_queue.put(None)
         processing_thread.join()
 
-<<<<<<< HEAD
 if __name__ == '__main__':
     # Whisper params
     model_string = 'ggml-small.en-tdrz.bin'
@@ -340,19 +283,3 @@ if __name__ == '__main__':
     start_recording(buffer_size_seconds=buffer_size_seconds, model_string=model_string, 
                     verbose=verbose, use_tinydiarize=use_tinydiarize, output_file=output_file,
                     client = client, index = index, parameters = parameters)
-=======
-
-if __name__ == "__main__":
-    model_string = "ggml-small.en-tdrz.bin"
-    buffer_size_seconds = 5
-    verbose = 0
-    use_tinydiarize = True
-    output_file = "transcription.txt"
-    start_recording(
-        buffer_size_seconds=buffer_size_seconds,
-        model_string=model_string,
-        verbose=verbose,
-        use_tinydiarize=use_tinydiarize,
-        output_file=output_file,
-    )
->>>>>>> 1e0503c (whiseper integration)
