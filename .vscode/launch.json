@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             // "module": "app.main",
-            "module": "exploration.whisper_call_back_test",
+            "module": "transcriber.whisper_call_back",
             "justMyCode": true
         }
     ]
