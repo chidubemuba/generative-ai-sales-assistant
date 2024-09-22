@@ -19,3 +19,5 @@ This README provides an overview of the project details and information about th
 - Carlos Salas https://github.com/crsalas
 - Matt Taylert https://github.com/Mtaylert
 - Chidubem Uba https://github.com/chidubemuba
+
+[![Watch Demo Video](https://github.com/yourusername/yourrepository/blob/main/assets/thumbnail.png)](https://drive.google.com/file/d/164eM3-Tu8NfduRBy_kNF6CDI8w8OTqDh/view)
