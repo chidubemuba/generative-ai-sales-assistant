@@ -20,4 +20,4 @@ This README provides an overview of the project details and information about th
 - Matt Taylert https://github.com/Mtaylert
 - Chidubem Uba https://github.com/chidubemuba
 
-[![Watch Demo Video](https://github.com/yourusername/yourrepository/blob/main/assets/thumbnail.png)](https://drive.google.com/file/d/164eM3-Tu8NfduRBy_kNF6CDI8w8OTqDh/view)
+[![Watch Demo Video](https://github.com/chidubemuba/generative-ai-sales-assistant/blob/master/videoimage.png)](https://drive.google.com/file/d/164eM3-Tu8NfduRBy_kNF6CDI8w8OTqDh/view)
